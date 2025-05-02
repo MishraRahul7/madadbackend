@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const uri = process.env.MADAD_URI;
+const uri = "mongodb+srv://rahulmishra:fVKzOvxojCv0EUPZ@cluster0.mksdkhc.mongodb.net/";
 mongoose.connect(uri, {
   useNewUrlParser: true,
   useCreateIndex: true,

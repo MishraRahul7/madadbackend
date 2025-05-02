@@ -1,57 +1,57 @@
-const mongoose = require("mongoose");
-const validator = require("validator");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const sharp = require("sharp");
+const mongoose = require('mongoose');
+const validator = require('validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const sharp = require('sharp');
 
 const userSchema = new mongoose.Schema(
   {
-    fname: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 15,
-      minlength: 2,
+      maxlength: 50,
+      minlength: 2
     },
-    lname: {
-      type: String,
-      trim: true,
-      maxlength: 15,
-    },
-    ftrname: {
+    fatherName: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 30,
-      minlength: 2,
+      maxlength: 50,
+      minlength: 2
     },
     dob: {
       type: Date,
-      require: true,
-    },
-    age: {
-      type: Number,
-      required: true,
+      required: true
     },
     weight: {
-      type: Number,
+      type: String,
       required: true,
+      trim: true
     },
     gender: {
       type: String,
-      require: true,
+      required: true,
+      enum: ['Male', 'Female', 'Other']
     },
     occupation: {
       type: String,
-      require: true,
+      required: true
     },
     bloodGroup: {
       type: String,
+      trim: true
     },
     phone: {
-      type: Number,
+      type: String,
       unique: true,
+      required: true,
       trim: true,
+      validate(value) {
+        if (!validator.isMobilePhone(value, 'en-IN')) {
+          throw new Error('Invalid phone number');
+        }
+      }
     },
     email: {
       type: String,
@@ -61,47 +61,47 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       validate(value) {
         if (!validator.isEmail(value)) {
-          throw new Error("Invalid email");
+          throw new Error('Invalid email');
         }
-      },
+      }
     },
     password: {
       type: String,
       required: true,
       trim: true,
       validate(value) {
-        if (value.toLowerCase().includes("password")) {
+        if (value.toLowerCase().includes('password')) {
           throw new Error('Password cannot contain "password"');
         }
-      },
+      }
     },
     address: {
       type: String,
-      require: true,
-      trim: true,
+      required: true,
+      trim: true
     },
     state: {
       type: String,
-      require: true,
+      required: true
     },
     city: {
       type: String,
-      require: true,
+      required: true
     },
     avatar: {
-      type: Buffer,
+      type: Buffer
     },
     tokens: [
       {
         token: {
           type: String,
-          required: true,
-        },
-      },
-    ],
+          required: true
+        }
+      }
+    ]
   },
   {
-    timestamps: true,
+    timestamps: true
   }
 );
 
@@ -119,7 +119,6 @@ userSchema.methods.toJSON = function () {
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
   const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_KEY);
-
   user.tokens = user.tokens.concat({ token });
   await user.save();
   return token;
@@ -128,23 +127,22 @@ userSchema.methods.generateAuthToken = async function () {
 userSchema.statics.findByCredentials = async (email, password) => {
   const user = await User.findOne({ email });
   if (!user) {
-    throw new Error("Unable to login");
+    throw new Error('Unable to login');
   }
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new Error("Unable to login");
+    throw new Error('Unable to login');
   }
   return user;
 };
 
-userSchema.pre("save", async function (next) {
+userSchema.pre('save', async function (next) {
   const user = this;
-
-  if (user.isModified("password")) {
+  if (user.isModified('password')) {
     user.password = await bcrypt.hash(user.password, 8);
   }
   next();
 });
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 module.exports = User;
